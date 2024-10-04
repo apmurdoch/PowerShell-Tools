@@ -7,31 +7,28 @@
 function Get-OfficeVersion {
   $OutputFile = "OfficeVersions.csv" # Path to the file on your server
 
-  $2010Path32Bit = "C:\Program Files (x86)\Microsoft Office\Office14\OSPP.VBS"
-  $2010Path64Bit = "C:\Program Files\Microsoft Office\Office14\OSPP.VBS"
-  $2013Path32Bit = "C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS"
-  $2013Path64Bit = "C:\Program Files\Microsoft Office\Office15\OSPP.VBS"
-  $2016Path32Bit = "C:\Program Files (x86)\Microsoft Office\Office16\OSPP.VBS"
-  $2016Path64Bit = "C:\Program Files\Microsoft Office\Office16\OSPP.VBS"
+  $officePaths = @(
+    @{Version = "2016"; Path32 = "C:\Program Files (x86)\Microsoft Office\Office16\OSPP.VBS"; Path64 = "C:\Program Files\Microsoft Office\Office16\OSPP.VBS"},
+    @{Version = "2013"; Path32 = "C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS"; Path64 = "C:\Program Files\Microsoft Office\Office15\OSPP.VBS"},
+    @{Version = "2010"; Path32 = "C:\Program Files (x86)\Microsoft Office\Office14\OSPP.VBS"; Path64 = "C:\Program Files\Microsoft Office\Office14\OSPP.VBS"}
+  )
 
-  if(Test-Path -Path $2010Path32Bit) {
-      $OSPP = $2010Path32Bit
-      }
-  if(Test-Path -Path $2010Path64Bit) {
-      $OSPP = $2010Path64Bit
-      }
-  if(Test-Path -Path $2013Path32Bit) {
-      $OSPP = $2013Path32Bit
-      }
-  if(Test-Path -Path $2013Path64Bit) {
-      $OSPP = $2013Path64Bit
-      }
-  if(Test-Path -Path $2016Path32Bit) {
-      $OSPP = $2016Path32Bit
-      }
-  if(Test-Path -Path $2016Path64Bit) {
-      $OSPP = $2016Path64Bit
-      }
+  $OSPP = $null
+  foreach ($office in $officePaths) {
+    if (Test-Path -Path $office.Path64) {
+      $OSPP = $office.Path64
+      break
+    }
+    if (Test-Path -Path $office.Path32) {
+      $OSPP = $office.Path32
+      break
+    }
+  }
+
+  if (-not $OSPP) {
+    Write-Warning "No supported Office installation found."
+    return
+  }
 
   $productInfo = cscript $OSPP /dstatus
   $productKey = ($productInfo | Select-String 'Last 5').Line.split(":")[1]
